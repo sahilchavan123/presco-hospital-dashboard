@@ -8265,7 +8265,9 @@ function bootFromSnapshot(snap){
  var act=document.querySelector('.hact');if(act)mast.insertBefore(act,mast.querySelector('.brandmark')||null);
  var old=document.getElementById('topnav');if(old)old.remove();
  var D=window.__D||{};
+ var HIDDEN_TABS=['t-league','t-dept','t-trend'];
  var G=[['Revenue','Hospital, department, ER and trend analysis',['t-revenue','t-payers','t-er','t-league','t-dept','t-trend','t-ops']],['Patients','OPD, registrations, admissions and discharges',['t-opd','t-reg','t-adm','t-disc']],['Doctors','Consultant performance, ROI and analysis',['t-pl','t-ph','t-pc','t-pd','t-consultants','t-roi','t-under']],['Marketing','Acquisition, referrals and campaigns',['t-marketing']],['Billing','OP, IP, ER module and Pharmacy billing, bill register and pivots',['t-bill','t-ipbill','t-erbill','t-pharmbill','t-breg','t-piv']],['Tools','Dates, history, groups and corrections',['t-day','t-hist','t-group','t-rules']]];
+ HIDDEN_TABS.forEach(function(id){var ob=document.getElementById(id);if(ob)ob.classList.add('sb-hide')});
  D['t-ipbill']='IP final, general and package billing totals.';
  D['t-erbill']='ER module billing totals from the bill-type register.';
  D['t-pharmbill']='OP, Casualty, and IP pharmacy billing totals from available register data.';
@@ -8274,7 +8276,7 @@ function bootFromSnapshot(snap){
  var items=[];
  G.forEach(function(g,gi){var b=document.createElement('button');b.type='button';b.className='sd-i';b.innerHTML='<span>'+g[0]+'</span>';
   var fb=document.getElementById(g[2][0]);if(fb)b.style.setProperty('--ico',getComputedStyle(fb).getPropertyValue('--ico'));
-  b.onclick=function(){var id=last[gi]||g[2][0],t=document.getElementById(id);if(t)t.click();window.scrollTo({top:0})};side.appendChild(b);items.push(b)});
+  b.onclick=function(){var id=last[gi];if(!id||HIDDEN_TABS.indexOf(id)>-1)id=g[2][0];var t=document.getElementById(id);if(t)t.click();window.scrollTo({top:0})};side.appendChild(b);items.push(b)});
  var col=document.createElement('button');col.type='button';col.className='sd-col';col.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg><span>Collapse</span>';
  col.onclick=function(){document.body.classList.toggle('mini');try{localStorage.setItem('presco-mini',document.body.classList.contains('mini')?'1':'0')}catch(e){}};
  try{if(localStorage.getItem('presco-mini')==='1')document.body.classList.add('mini')}catch(e){}
@@ -8283,7 +8285,7 @@ function bootFromSnapshot(snap){
  var h1=hd.querySelector('h1'),sd=document.createElement('p');sd.className='sub-d';h1.parentNode.insertBefore(sd,h1.nextSibling);
  var rail=document.getElementById('rail');if(rail){var kw=document.createElement('div');kw.className='kpiwrap';kw.appendChild(rail);hd.parentNode.insertBefore(kw,hd.nextSibling)}
  var cur=-1;
- function tabs(gi){sub.innerHTML='';G[gi][2].forEach(function(id){var ob=document.getElementById(id);if(!ob)return;var b=document.createElement('button');b.type='button';b.dataset.t=id;b.textContent=ob.textContent.trim();b.style.setProperty('--ico',getComputedStyle(ob).getPropertyValue('--ico'));b.onclick=function(){ob.click()};sub.appendChild(b)})}
+ function tabs(gi){sub.innerHTML='';G[gi][2].forEach(function(id){if(HIDDEN_TABS.indexOf(id)>-1)return;var ob=document.getElementById(id);if(!ob)return;var b=document.createElement('button');b.type='button';b.dataset.t=id;b.textContent=ob.textContent.trim();b.style.setProperty('--ico',getComputedStyle(ob).getPropertyValue('--ico'));b.onclick=function(){ob.click()};sub.appendChild(b)})}
  function sync(){var b=nav.querySelector('[aria-selected="true"]');if(!b)return;
   G.forEach(function(g,gi){if(g[2].indexOf(b.id)>-1){if(cur!==gi){cur=gi;tabs(gi)}last[gi]=b.id;items.forEach(function(x,i){x.classList.toggle('on',i===gi)});h1.textContent=g[0];sd.textContent=D[b.id]||g[1]}});
   sub.querySelectorAll('button').forEach(function(x){x.classList.toggle('on',x.dataset.t===b.id)})}

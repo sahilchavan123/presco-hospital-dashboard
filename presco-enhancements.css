@@ -297,6 +297,11 @@ section[role="tabpanel"]:not(.hidden) { animation: none; }
   line-height: 1.55;
 }
 .mgmt-revenue-kpis { grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); }
+.mgmt-revenue-kpis .mgmt-kpi-value {
+  font-size: 17px;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
 .mgmt-revenue-chart { width: 100%; overflow-x: auto; }
 .mgmt-revenue-chart svg { display: block; width: 100%; min-width: 720px; height: auto; }
 .mgmt-revenue-chart text { font-family: var(--body); }
