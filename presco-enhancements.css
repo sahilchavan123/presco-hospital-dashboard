@@ -36,14 +36,17 @@
 .sd-col:hover { color: #fff; background: #111827; }
 
 header.mast .wrap {
-  background: var(--card);
+  background: transparent;
   color: var(--ink);
-  border: 1px solid var(--rule);
-  border-radius: 14px;
+  border: 0;
+  border-radius: 0;
   box-shadow: none;
 }
 header.mast .wrap::before { display: none; }
 header.mast h1 { color: var(--ink); }
+header.mast h1 span { color: var(--mute); }
+header.mast .sub-d,
+header.mast .asof { color: var(--mute); }
 #subnav { border-bottom: 1px solid var(--rule); }
 #subnav button { color: var(--mute); }
 #subnav button:hover,

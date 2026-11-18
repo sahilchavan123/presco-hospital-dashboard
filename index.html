@@ -600,17 +600,18 @@ body.mini .sd-i{justify-content:center;padding:11px 0}
 body.mini .sd-col{justify-content:center}
 body.mini .sd-col svg{transform:rotate(180deg)}
 header.mast{padding:0}
-header.mast .wrap{max-width:none;margin:0;padding:22px 32px 0;border-radius:0;background:#17375E;color:#fff;box-shadow:none;border:0}
+header.mast .wrap{max-width:none;margin:0;padding:22px 32px 0;border-radius:0;background:transparent;color:var(--ink);box-shadow:none;border:0}
 header.mast .wrap::before{display:none}
 .mast-top{align-items:flex-start}
-h1{color:#fff;font:700 22px Inter,sans-serif;letter-spacing:-.01em}
+header.mast .mast-top{background:transparent;border-color:transparent;border-radius:0;box-shadow:none}
+h1{color:var(--ink);font:700 22px Inter,sans-serif;letter-spacing:-.01em}
 h1 span{display:none}
-.sub-d{margin:2px 0 0;color:#A9BDD6;font-size:13px}
-.asof{color:#A9BDD6;margin-top:8px}
-.asof select{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.25)}
+.sub-d{margin:2px 0 0;color:var(--mute);font-size:13px}
+.asof{color:var(--mute);margin-top:8px}
+.asof select{background:#fff;color:var(--ink);border-color:var(--rule)}
 .asof select option{color:#0F1731}
 .asof button.btn{background:#0D9488;border-color:#0D9488}
-.hact button{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}
+.hact button{background:#fff;border-color:var(--rule);color:var(--ink)}
 .brandmark{padding:6px 12px;border-radius:12px;background:#fff}
 .brandmark img{height:34px}
 #subnav{display:flex;gap:2px;margin-top:16px;overflow-x:auto}
@@ -731,10 +732,13 @@ nav.tabs #t-pd{--ico:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2
 <div class="tabbar"><div class="wrap">
     <div class="sb-brand"><div class="sb-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div><div><div class="sb-name">Presco</div><div class="sb-sub">Hospital Operating System</div></div></div><div class="sb-search"><input type="search" id="sbSearch" placeholder="Search menu..." aria-label="Search menu" autocomplete="off"></div>
     <nav class="tabs" role="tablist">
-      <button role="tab" id="t-league" aria-selected="true" aria-controls="p-league">League</button>
+      <button role="tab" id="t-league" aria-selected="false" aria-controls="p-league">League</button>
       <button role="tab" id="t-dept" aria-selected="false" aria-controls="p-dept">Departments &amp; pulse</button>
     <button role="tab" id="t-er" aria-selected="false" aria-controls="p-er">ER revenue</button>
-      <button role="tab" id="t-revenue" aria-selected="false" aria-controls="p-revenue">Revenue overview</button>
+      <button role="tab" id="t-revenue" aria-selected="true" aria-controls="p-revenue">Revenue overview</button>
+    <button role="tab" id="t-oprev" aria-selected="false" aria-controls="p-revenue" class="sb-hide">OP revenue</button>
+    <button role="tab" id="t-iprev" aria-selected="false" aria-controls="p-revenue" class="sb-hide">IP revenue</button>
+    <button role="tab" id="t-pharmrev" aria-selected="false" aria-controls="p-revenue" class="sb-hide">Pharmacy revenue</button>
       <button role="tab" id="t-payers" aria-selected="false" aria-controls="p-payers">Payer types</button>
       <button role="tab" id="t-consultants" aria-selected="false" aria-controls="p-consultants">Consultant dashboard</button>
       <button role="tab" id="t-marketing" aria-selected="false" aria-controls="p-marketing">Marketing dashboard</button>
@@ -767,7 +771,7 @@ nav.tabs #t-pd{--ico:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2
 <main class="wrap">
 
   <!-- ============ LEAGUE ============ -->
-  <section id="p-league" role="tabpanel" aria-labelledby="t-league">
+  <section id="p-league" role="tabpanel" aria-labelledby="t-league" class="hidden">
     <div class="controls">
       <div class="field"><label for="metric">Rank by</label>
         <select id="metric">
@@ -880,7 +884,7 @@ nav.tabs #t-pd{--ico:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2
   <section id="p-pc" role="tabpanel" aria-labelledby="t-pc" class="hidden"><div id="pf-pc"></div></section>
   <section id="p-pd" role="tabpanel" aria-labelledby="t-pd" class="hidden"><div id="pf-pd"></div></section>
   <section id="p-er" role="tabpanel" aria-labelledby="t-er" class="hidden"><div id="erBody"></div></section>
-  <section id="p-revenue" role="tabpanel" aria-labelledby="t-revenue" class="hidden"><div id="revenueDashboard"></div></section>
+  <section id="p-revenue" role="tabpanel" aria-labelledby="t-revenue"><div id="revenueDashboard"></div></section>
   <section id="p-payers" role="tabpanel" aria-labelledby="t-payers" class="hidden"><div id="payerDashboard"></div></section>
   <section id="p-consultants" role="tabpanel" aria-labelledby="t-consultants" class="hidden"><div id="consultantDashboard"></div></section>
   <section id="p-marketing" role="tabpanel" aria-labelledby="t-marketing" class="hidden"><div id="marketingDashboard"></div></section>
@@ -4881,14 +4885,16 @@ $('rail').innerHTML = [
   + '<div id="railTgt"><dt>On target today</dt><dd>—</dd><div class="sub">no daily targets set yet</div></div>';
 
 /* ---------- tabs ---------- */
-[['t-league','p-league'],['t-dept','p-dept'],['t-er','p-er'],['t-pl','p-pl'],['t-ph','p-ph'],['t-pc','p-pc'],['t-pd','p-pd'],['t-trend','p-trend'],['t-ops','p-ops'],['t-opd','p-opd'],['t-reg','p-reg'],['t-adm','p-adm'],['t-disc','p-disc'],['t-roi','p-roi'],['t-under','p-under'],['t-rules','p-rules'],['t-bill','p-bill'],['t-ipbill','p-ipbill'],['t-erbill','p-erbill'],['t-pharmbill','p-pharmbill'],['t-breg','p-breg'],['t-piv','p-piv'],['t-day','p-day'],['t-hist','p-hist'],['t-group','p-group'],['t-revenue','p-revenue'],['t-payers','p-payers'],['t-consultants','p-consultants'],['t-marketing','p-marketing']]
+[['t-league','p-league'],['t-dept','p-dept'],['t-er','p-er'],['t-pl','p-pl'],['t-ph','p-ph'],['t-pc','p-pc'],['t-pd','p-pd'],['t-trend','p-trend'],['t-ops','p-ops'],['t-opd','p-opd'],['t-reg','p-reg'],['t-adm','p-adm'],['t-disc','p-disc'],['t-roi','p-roi'],['t-under','p-under'],['t-rules','p-rules'],['t-bill','p-bill'],['t-ipbill','p-ipbill'],['t-erbill','p-erbill'],['t-pharmbill','p-pharmbill'],['t-breg','p-breg'],['t-piv','p-piv'],['t-day','p-day'],['t-hist','p-hist'],['t-group','p-group'],['t-revenue','p-revenue'],['t-oprev','p-revenue'],['t-iprev','p-revenue'],['t-pharmrev','p-revenue'],['t-payers','p-payers'],['t-consultants','p-consultants'],['t-marketing','p-marketing']]
 .forEach(([tb, pn], i, arr) => {
   $(tb).addEventListener('click', () => {
     arr.forEach(([t2, p2]) => {
       const on = t2 === tb;
       $(t2).setAttribute('aria-selected', on);
-      $(p2).classList.toggle('hidden', !on);
     });
+    const activePanels = new Set(arr.filter(([t2]) => $(t2).getAttribute('aria-selected') === 'true').map(([, p2]) => p2));
+    new Set(arr.map(([, p2]) => p2)).forEach(p2 => $(p2).classList.toggle('hidden', !activePanels.has(p2)));
+    if (pn === 'p-revenue') $('p-revenue').setAttribute('aria-labelledby', tb);
     if (pn === 'p-league'){ renderPicker(); renderLeague(); }
     if (pn === 'p-dept') renderDepts(); if (/^p-p[lhcd]$/.test(pn)) { try { drawPerf(pn); } catch (e) { console.error(e); } } if (pn === 'p-er') { try { drawEr(); } catch (e) { console.error(e); } }
     if (pn === 'p-trend') drawTrendP();
@@ -4915,6 +4921,14 @@ $('rail').innerHTML = [
     e.preventDefault();
     const nx = $(arr[(j + arr.length) % arr.length][0]);
     nx.focus(); nx.click();
+  });
+});
+[['t-revenue', ''], ['t-oprev', 'OPD'], ['t-iprev', 'IPD'], ['t-pharmrev', 'Pharmacy']].forEach(([tabId, type]) => {
+  $(tabId).addEventListener('click', () => {
+    const select = $('revenueDashboard').querySelector('select[data-filter="type"]');
+    if (!select || select.value === type) return;
+    select.value = type;
+    select.dispatchEvent(new Event('change', {bubbles: true}));
   });
 });
 
@@ -8266,11 +8280,14 @@ function bootFromSnapshot(snap){
  var old=document.getElementById('topnav');if(old)old.remove();
  var D=window.__D||{};
  var HIDDEN_TABS=['t-league','t-dept','t-trend'];
- var G=[['Revenue','Hospital, department, ER and trend analysis',['t-revenue','t-payers','t-er','t-league','t-dept','t-trend','t-ops']],['Patients','OPD, registrations, admissions and discharges',['t-opd','t-reg','t-adm','t-disc']],['Doctors','Consultant performance, ROI and analysis',['t-pl','t-ph','t-pc','t-pd','t-consultants','t-roi','t-under']],['Marketing','Acquisition, referrals and campaigns',['t-marketing']],['Billing','OP, IP, ER module and Pharmacy billing, bill register and pivots',['t-bill','t-ipbill','t-erbill','t-pharmbill','t-breg','t-piv']],['Tools','Dates, history, groups and corrections',['t-day','t-hist','t-group','t-rules']]];
+ var G=[['Revenue','Hospital, department, ER and trend analysis',['t-revenue','t-oprev','t-iprev','t-er','t-pharmrev','t-payers','t-league','t-dept','t-trend','t-ops']],['Patients','OPD, registrations, admissions and discharges',['t-opd','t-reg','t-adm','t-disc']],['Doctors','Consultant performance, ROI and analysis',['t-pl','t-ph','t-pc','t-pd','t-consultants','t-roi','t-under']],['Marketing','Acquisition, referrals and campaigns',['t-marketing']],['Billing','OP, IP, ER module and Pharmacy billing, bill register and pivots',['t-bill','t-ipbill','t-erbill','t-pharmbill','t-breg','t-piv']],['Tools','Dates, history, groups and corrections',['t-day','t-hist','t-group','t-rules']]];
  HIDDEN_TABS.forEach(function(id){var ob=document.getElementById(id);if(ob)ob.classList.add('sb-hide')});
  D['t-ipbill']='IP final, general and package billing totals.';
  D['t-erbill']='ER module billing totals from the bill-type register.';
  D['t-pharmbill']='OP, Casualty, and IP pharmacy billing totals from available register data.';
+ D['t-oprev']='Outpatient revenue from registered OP bill types.';
+ D['t-iprev']='Inpatient revenue from registered IP bill types.';
+ D['t-pharmrev']='Pharmacy revenue from available OP, Casualty, and IP bill types.';
  var last={},side=document.createElement('div');side.id='side';
  side.innerHTML='<div class="sd-brand"><div class="sd-logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div><div><div class="sd-t">Presco</div><div class="sd-s">Hospital Operating System</div></div></div><div class="sd-lbl">Dashboard</div>';
  var items=[];

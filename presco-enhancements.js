@@ -872,6 +872,9 @@
 
   const tablist = document.querySelector('nav.tabs[role="tablist"]');
   if (tablist) {
+    const activeTab = tablist.querySelector('button[aria-selected="true"]');
+    document.body.classList.toggle('management-tab-active',
+      !!activeTab && GROUPS.includes(activeTab.getAttribute('aria-controls')));
     tablist.addEventListener('click', event => {
       const tab = event.target.closest('button[role="tab"]');
       if (tab) document.body.classList.toggle('management-tab-active', GROUPS.includes(tab.getAttribute('aria-controls')));
