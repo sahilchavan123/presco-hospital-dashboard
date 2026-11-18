@@ -1978,7 +1978,7 @@ function bindTipsGlobal(root){
    One filter state for the whole dashboard (PERIOD) and a reusable control that can also
    drive a private state, which is how the consultant drill-down gets its own filter.
    preset 'all' means no filtering: every page then behaves exactly as it did before. */
-const PERIOD = {preset: 'all', from: '', to: ''};
+const PERIOD = {preset: 'all', from: '', to: '', branch: ''};
 const PRESETS = [['all','All days on file'],['latest','Latest day only'],['single','A single date'],
   ['last3','Last 3 days'],['last7','Last 7 days'],['last14','Last 14 days'],['last30','Last 30 days'],
   ['mtd','Month to date'],['pmt','Previous month'],['custom','Date range…']];
@@ -2038,18 +2038,22 @@ function periodControls(host, st, dates, onChange, opts){
   opts = opts || {};
   const minD = dates[0] || '', maxD = dates[dates.length - 1] || '';
   const id = 'pc' + Math.random().toString(36).slice(2, 7);
+  const branches = opts.branches || [];
   host.innerHTML = `<div class="periodbar${opts.compact ? ' compact' : ''}">
     <strong class="plabel">${opts.title || 'Date filter'}</strong>
     <div class="field"><label for="${id}p">Period</label><select id="${id}p">
       ${PRESETS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></div>
     <div class="field pfrom"><label for="${id}f">From</label><input type="date" id="${id}f" min="${minD}" max="${maxD}"></div>
     <div class="field pto"><label for="${id}t" id="${id}l">To</label><input type="date" id="${id}t" min="${minD}" max="${maxD}"></div>
+    ${branches.length ? `<div class="field"><label for="${id}b">Branch</label><select id="${id}b">
+      <option value="">All branches</option>${branches.map(b => `<option value="${esc(b.value)}">${esc(b.label)}</option>`).join('')}</select></div>` : ''}
     <button class="btn ghost sm" type="button" id="${id}r">Clear filter</button>
     <span class="pcov" id="${id}c"></span>
     <span class="pextra" id="${id}x"></span></div>`;
   const q = s => host.querySelector('#' + id + s);
   const paint = () => {
     q('p').value = st.preset; q('f').value = st.from || ''; q('t').value = st.to || '';
+    if (q('b')) q('b').value = st.branch || '';
     const one = st.preset === 'single' || st.preset === 'latest';
     host.querySelector('.pfrom').style.display = (st.preset === 'all' || one) ? 'none' : '';
     host.querySelector('.pto').style.display = st.preset === 'all' ? 'none' : '';
@@ -2064,7 +2068,8 @@ function periodControls(host, st, dates, onChange, opts){
     if (st.preset === 'single' || st.preset === 'latest'){ st.preset = 'single'; st.from = st.to = v; }
     else { st.preset = 'custom'; st.to = v; if (!st.from || st.from > v) st.from = v; }
     paint(); onChange(st); };
-  q('r').onclick = () => { applyPreset(st, 'all', minD, maxD); paint(); onChange(st); };
+  if (q('b')) q('b').onchange = () => { st.branch = q('b').value; paint(); onChange(st); };
+  q('r').onclick = () => { applyPreset(st, 'all', minD, maxD); st.branch = ''; paint(); onChange(st); };
   paint();
   return {paint};
 }
@@ -4232,7 +4237,11 @@ function renderDiscPage(host, store, opts, rerender){
   const qs = id => host.querySelector('#' + id);
   const read = () => ({loc: qs('dsLoc').value, win: +qs('dsWin').value, type: qs('dsType').value, flag: o.flag, q: qs('dsQ').value});
   if (rerender){
-    ['dsLoc', 'dsWin', 'dsType'].forEach(id => qs(id).addEventListener('input', () => rerender(read())));
+    ['dsLoc', 'dsWin', 'dsType'].forEach(id => qs(id).addEventListener('input', () => {
+      const next = read();
+      if (id === 'dsLoc') PERIOD.branch = next.loc;
+      rerender(next);
+    }));
     let tq = null; qs('dsQ').addEventListener('input', () => { clearTimeout(tq); tq = setTimeout(() => rerender(read()), 300); });
     host.querySelectorAll('[data-flag]').forEach(b => b.addEventListener('click', () => rerender(Object.assign(read(), {flag: b.dataset.flag}))));
   }
@@ -4962,7 +4971,12 @@ function redrawActive(){
 periodControls($('periodHost'), PERIOD, PD_DATES, () => {
   sess.set('md-period', JSON.stringify(PERIOD));
   redrawActive();
-}, {coverage: st => (PERIOD_NOTE && st.preset === 'all' ? PERIOD_NOTE + ' ' : '') + coverageText(st, STORE),
+}, {branches: [...new Set([
+      ...((STORE && STORE.disc) || []).map(r => r.loc),
+      ...((STORE && STORE.adm) || []).map(r => r.loc),
+      ...((STORE && STORE.opBills) || []).map(r => r.loc)
+    ].filter(Boolean))].sort().map(value => ({value, label: locName(value)})),
+    coverage: st => (PERIOD_NOTE && st.preset === 'all' ? PERIOD_NOTE + ' ' : '') + coverageText(st, STORE),
     extra: (host, st) => {
       const snap = periodActive(st) && st.to && (STORE.snapshots || []).find(x => x.asOf === st.to);
       host.innerHTML = (snap && snap.asOf !== DATA.asOf)
@@ -6317,6 +6331,7 @@ function drawRoi(){
 /* ================= IP DISCHARGES ================= */
 let DISC_OPTS = {loc: '', win: 30, type: '', flag: 'icu', q: ''};
 function drawDisc(){
+  DISC_OPTS.loc = PERIOD.branch || '';
   renderDiscPage($('discBody'), STORE || {disc: []}, DISC_OPTS, o => { DISC_OPTS = o; drawDisc(); });
   bindTips($('discBody'));
 }
@@ -6344,12 +6359,14 @@ function drawEr(){
  try {
  const store = STORE || {};
  const inP = typeof inPeriod === 'function' ? inPeriod : () => true;
+ const branch = PERIOD.branch || '';
+ const inBranch = r => !branch || r.loc === branch;
  const tc = t => typeof titleCase2 === 'function' ? titleCase2(String(t || '').toLowerCase()) : String(t || '');
  const R = n => '₹' + Math.round(n || 0).toLocaleString('en-IN');
  const S = n => { const a = Math.abs(n || 0); return a >= 1e7 ? (n / 1e7).toFixed(2) + ' Cr' : a >= 1e5 ? (n / 1e5).toFixed(2) + ' L' : Math.round(n || 0).toLocaleString('en-IN'); };
  const RS = n => '₹' + S(n);
  const sum = (a, f) => a.reduce((x, r) => x + (r[f] || 0), 0);
- const all = btRows(store), per = r => btActive(r) && inP(r.bdate);
+ const all = btRows(store), per = r => btActive(r) && inP(r.bdate) && inBranch(r);
  const fin = all.filter(r => r.type === 'ER IP FINAL BILLS' && per(r));
  if (!fin.length){ host.innerHTML = '<div class="card" style="margin-top:16px"><h2>No ER bills in this period</h2><p class="note" style="margin-bottom:0">Load the <b>BILL REGISTER_BILL_TYPE_SEMI SUMMARY</b> Excel export (bill type <b>ER IP FINAL BILLS</b>) or widen the date filter.</p></div>'; return; }
  const net = sum(fin, 'net'), conc = sum(fin, 'conc'), rc = sum(fin, 'trcpt'), out = sum(fin, 'tout');
@@ -6372,13 +6389,13 @@ function drawEr(){
  const grp = kf => { const m = {}; fin.forEach(r => { const k = kf(r) || '—', o = m[k] = m[k] || {n: 0, net: 0}; o.n++; o.net += r.net; }); return Object.entries(m).map(([k, o]) => ({k, ...o})).sort((a, b) => b.net - a.net); };
  const tbl = (rows, head) => `<table class="btx"><thead><tr><th class="l">${head}</th><th>Bills</th><th>Net revenue</th><th>Share</th><th>Avg / bill</th></tr></thead><tbody>${rows.map(x => `<tr><td class="l">${tc(x.k)}</td><td>${x.n.toLocaleString('en-IN')}</td><td><b>${RS(x.net)}</b></td><td>${(100 * x.net / net).toFixed(1)}%<span class="bar" style="width:${Math.max(3, 100 * x.net / rows[0].net)}%"></span></td><td>${R(x.net / x.n)}</td></tr>`).join('')}</tbody></table>`;
  const kp = (l, v, n) => `<div class="card"><p class="note" style="margin:0">${l}</p><p class="kpi">${v}</p><p class="note" style="margin:0">${n}</p></div>`;
- const adm = (store.adm || []).filter(r => inP(r.date)), erAdm = adm.filter(r => r.type === 'Emergency' || r.type === 'MLC');
+ const adm = (store.adm || []).filter(r => inP(r.date) && inBranch(r)), erAdm = adm.filter(r => r.type === 'Emergency' || r.type === 'MLC');
  const dm = {}; (store.disc || []).forEach(d => { dm[d.admn] = d; });
  const mt = erAdm.map(r => dm[r.admn]).filter(Boolean);
  const DT = (typeof DATA !== 'undefined' && DATA) || window._DATA || {};
  const isCas = k => /casualty|emergency/i.test(k);
  const mgmt = (store.days || []).filter(d => inP(d.date)).reduce((a, d) => a + Object.entries(d.depts || {}).filter(([k]) => isCas(k)).reduce((x, [, v]) => x + v, 0), 0);
- const cd = (DT.depts || []).find(d => isCas(d.name));
+ const cd = branch ? null : (DT.depts || []).find(d => isCas(d.name));
  host.innerHTML = `
  <div class="grid3">
   ${kp('ER revenue (net)', RS(net), fin.length.toLocaleString('en-IN') + ' bills · ' + new Set(fin.map(r => r.umr)).size.toLocaleString('en-IN') + ' patients')}
@@ -6399,7 +6416,7 @@ function drawEr(){
   <table class="btx"><thead><tr><th class="l">View</th><th class="l">What it counts</th><th>Amount</th></tr></thead><tbody>
    <tr><td class="l"><b>ER module bills</b></td><td class="l">Bills raised in the Emergency module (bill register)</td><td><b>${RS(net)}</b></td></tr>
    <tr><td class="l"><b>Admitted through ER</b></td><td class="l">${erAdm.length.toLocaleString('en-IN')} Emergency / MLC admissions (${adm.length ? (100 * erAdm.length / adm.length).toFixed(0) : 0}% of all); billing of the ${mt.length} already discharged</td><td><b>${RS(sum(mt, 'gross'))}</b></td></tr>
-   <tr><td class="l"><b>Casualty in management report</b></td><td class="l">Revenue credited to the Casualty and Emergency department${cd ? ' (YTD ' + RS(cd.ytd) + ')' : ''}</td><td><b>${RS(mgmt)}</b></td></tr>
+   <tr><td class="l"><b>Casualty in management report</b></td><td class="l">${branch ? 'Management report is not split by branch; showing no branch-level figure.' : 'Revenue credited to the Casualty and Emergency department' + (cd ? ' (YTD ' + RS(cd.ytd) + ')' : '')}</td><td><b>${branch ? '—' : RS(mgmt)}</b></td></tr>
   </tbody></table></div>`;
  bindTips(host);
  } catch (e) { console.error(e); host.innerHTML = '<div class="card"><h2>ER view could not be drawn</h2></div>'; }
